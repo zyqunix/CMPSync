@@ -95,8 +95,6 @@ while true do
     if file then
       local serverIndex = file:read("*line")
       local messageText = file:read("*all")
-      print(serverIndex)
-      print(messageText)
       file:close()
       
       if serverIndex and #messageText > 0 then
@@ -105,7 +103,6 @@ while true do
         local servers = dofile("/home/servers.lua")
         if servers[serverIndex] then
           local url = servers[serverIndex].value
-          print("sending to "..url)
           
           local contents = {
             content = messageText,
@@ -118,7 +115,6 @@ while true do
             local chunk = requestHandle.read()
             if not chunk then break end
             response = response .. chunk
-            print(response)
           end
         end
       end
