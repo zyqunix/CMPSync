@@ -89,6 +89,7 @@ end
 
 local pipeFile = "/tmp/discord_pipe"
 
+while true do
   if filesystem.exists(pipeFile) then
     local file = io.open(pipeFile, "r")
     if file then
@@ -117,5 +118,5 @@ local pipeFile = "/tmp/discord_pipe"
       end
     end
   end
-  os.sleep(300)
+  os.sleep(0.5)
 end
