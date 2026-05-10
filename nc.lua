@@ -37,7 +37,7 @@ local message = string.format(
 -> %s-%s
 -> %.2f RF/%.2f RF || %.2f RF/t
 -> %.2f%% Efficiency at %.2f Kelvin (%.2f Cooling Rate)
-]], toroid_size, processing, first_fuel, second_fuel, energy_stored, max_energy, energy_gen, efficiency, temperature, cooling_Rate)
+]], toroid_size, processing, first_fuel, second_fuel, energy_stored, max_energy, energy_gen, efficiency, temperature / 1000000, cooling_Rate)
 
 print(message)
 
