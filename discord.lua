@@ -1,8 +1,8 @@
---Dependencies
+--dependencies
 
 local headers = {
-  ["Content-Type"] = "application/json",
-  ["User-Agent"] = "MyBot (https://www.example.com, 1.0)"
+  ["content-type"] = "application/json",
+  ["user-agent"] = "mybot (https://www.example.com, 1.0)"
 }
 local internet = require("internet")
 local component = require("component")
@@ -10,7 +10,7 @@ local term = require("term")
 local filesystem = require("filesystem") 
 
 local args = {...}
-local cmdArgs = {
+local cmdargs = {
   user = nil,
   password = nil,
   server = nil,
@@ -20,21 +20,23 @@ local cmdArgs = {
 local i = 1
 while i <= #args do
   if args[i] == "-u" or args[i] == "--user" then
-    cmdArgs.user = args[i + 1]
+    cmdargs.user = args[i + 1]
     i = i + 2
   elseif args[i] == "-p" or args[i] == "--password" then
-    cmdArgs.password = args[i + 1]
+    cmdargs.password = args[i + 1]
     i = i + 2
-  elseif args[i] == "-s" or args[i] == "--server" then
-    cmdArgs.server = tonumber(args[i + 1])
+  elseif args[i] == "-server" or args[i] == "-s" then
+    cmdargs.server = tonumber(args[i + 1])
     i = i + 2
   elseif args[i] == "-m" or args[i] == "--message" then
-    cmdArgs.message = args[i + 1]
+    cmdargs.message = args[i + 1]
     i = i + 2
   else
     i = i + 1
   end
 end
+
+local noninteractive = cmdargs.user and cmdargs.password and cmdargs.server and cmdargs.message
 
 local serversfile = ("/home/servers.lua")
 if not filesystem.exists(serversfile) then
@@ -50,9 +52,9 @@ if not filesystem.exists(shortcutsfile) then
   shortcutsfile:close()
 end
 
---Dependencies
+--dependencies
 
---Main code
+--main code
 
 local json = { _version = "0.1.2" }
 local encode
@@ -137,46 +139,48 @@ end
 
 local gpu = component.gpu
 
-local bootscreen = {
-"   _____   __  __   _____  ",
-"  / ____| |  \\/  | |  __ \\ ",
-" | |      | \\  / | | |__) |",
-" | |      | |\\/| | |  ___/ ",
-" | |____  | |  | | | |     ",
-"  \\_____| |_|  |_| |_|     "
-}
+if not noninteractive then
+  local bootscreen = {
+  "   _____   __  __   _____  ",
+  "  / ____| |  \\/  | |  __ \\ ",
+  " | |      | \\  / | | |__) |",
+  " | |      | |\\/| | |  ___/ ",
+  " | |____  | |  | | | |     ",
+  "  \\_____| |_|  |_| |_|     "
+  }
 
-local screenWidth, screenHeight = gpu.getResolution()
-local centerX = math.floor(screenWidth / 2)
-local centerY = math.floor(screenHeight / 2)
+  local screenwidth, screenheight = gpu.getresolution()
+  local centerx = math.floor(screenwidth / 2)
+  local centery = math.floor(screenheight / 2)
 
-term.clear()
+  term.clear()
 
-for i, line in ipairs(bootscreen) do
-  local lineX = centerX - math.floor(#line / 2)
-  gpu.set(lineX, centerY - math.ceil(#bootscreen / 2) + i - 1, line)
+  for i, line in ipairs(bootscreen) do
+    local linex = centerx - math.floor(#line / 2)
+    gpu.set(linex, centery - math.ceil(#bootscreen / 2) + i - 1, line)
+  end
+
+  local slidedelay = 1 
+  local slidedistance = #bootscreen + 1
+  os.sleep(slidedelay)
+  for i = 0, slidedistance do
+    gpu.copy(1, i + 1, screenwidth, screenheight - i, 0, -i)
+    os.sleep(0.05)
+  end
+
+  term.clear()
 end
 
-local slideDelay = 1 
-local slideDistance = #bootscreen + 1
-os.sleep(slideDelay)
-for i = 0, slideDistance do
-  gpu.copy(1, i + 1, screenWidth, screenHeight - i, 0, -i)
-  os.sleep(0.05)
-end
-
-term.clear()
-
-local loginusr = cmdArgs.user
-local loginpwd = cmdArgs.password
+local loginusr = cmdargs.user
+local loginpwd = cmdargs.password
 
 if not loginusr then
-  io.write("Username:\n")
+  io.write("username:\n")
   loginusr = io.read()
 end
 
-local function checkPassword(attempt)  
-  if component.isAvailable("data") then  
+local function checkpassword(attempt)  
+  if component.isavailable("data") then  
     local file = io.open("password.lua")
       for line in file:lines() do
         local salted,salt = line:match("^([^;]+);(.+)$")
@@ -201,13 +205,13 @@ end
 
 if filesystem.exists("/home/password.lua") then 
   if not loginpwd then
-    io.write("Password:\n")
+    io.write("password:\n")
     loginpwd = io.read()
   end
 else
-  if component.isAvailable("data") then
+  if component.isavailable("data") then
     if not loginpwd then
-      io.write("Enter the password you want to be set:\n")
+      io.write("enter the password you want to be set:\n")
       loginpwd = io.read()
     end
     local file = io.open("password.lua","a")
@@ -215,31 +219,33 @@ else
     local hashed = component.data.encode64(component.data.sha256(loginpwd..salt))
     file:write(string.format("%s;%s\n",hashed,component.data.encode64(salt)))
     file:close()
-    if not cmdArgs.password then
+    if not cmdargs.password then
       term.clear()
-      io.write("Password:\n")
+      io.write("password:\n")
       loginpwd = io.read()
     end
   else
     if not loginpwd then
-      io.write("Enter the password you want to be set:\n")
+      io.write("enter the password you want to be set:\n")
       loginpwd = io.read()
     end
     local file = io.open("password.lua","a")
     file:write(loginpwd)
     file:close()
-    if not cmdArgs.password then
+    if not cmdargs.password then
       term.clear()
-      io.write("Password:\n")
+      io.write("password:\n")
       loginpwd = io.read()
     end
   end
 end 
 
-if checkPassword(loginpwd) == true then
-  term.clear()
+if checkpassword(loginpwd) == true then
+  if not noninteractive then
+    term.clear()
+  end
 
-  -- Main code
+  -- main code
 
   local options = dofile("servers.lua")
 
@@ -247,7 +253,7 @@ if checkPassword(loginpwd) == true then
     local term = require "term"
     local options = dofile("servers.lua")
     
-    local function saveOptions()
+    local function saveoptions()
       local file = io.open("servers.lua", "w")
       file:write("return {\n")
       for i, option in ipairs(options) do
@@ -257,20 +263,20 @@ if checkPassword(loginpwd) == true then
       file:close()
     end
     
-    local function addOption()
-      print("Enter a name for the new server:")
+    local function addoption()
+      print("enter a name for the new server:")
       io.write()
       local name = io.read()
-      print("Enter a webhook link for the new server:")
+      print("enter a webhook link for the new server:")
       io.write()
       local value = io.read()
       table.insert(options, {name = name, value = value})
-      saveOptions()
-      print("Option added.")
+      saveoptions()
+      print("option added.")
     end
     
-    local function removeOption()
-      print("Enter the number of the server you want to remove:")
+    local function removeoption()
+      print("enter the number of the server you want to remove:")
       for i, option in ipairs(options) do
         print(i .. ". " .. option.name)
       end
@@ -278,15 +284,15 @@ if checkPassword(loginpwd) == true then
       local choice = tonumber(io.read())
       if choice and options[choice] then
         table.remove(options, choice)
-        saveOptions()
-        print("Server removed.")    
+        saveoptions()
+        print("server removed.")    
       else
-        print("Invalid choice.")
+        print("invalid choice.")
       end
     end
     
-    local function listOptions()
-      print("Existing options:")
+    local function listoptions()
+      print("existing options:")
       for i, option in ipairs(options) do
         print(i .. ". " .. option.name)
       end
@@ -294,34 +300,34 @@ if checkPassword(loginpwd) == true then
     
     while true do
       print("\n")
-      print("The server list is empty, add a new server")
-      print("1. Add a server")
-      print("2. Remove a server")
-      print("3. List existing servers")
-      print("4. Exit")
+      print("the server list is empty, add a new server")
+      print("1. add a server")
+      print("2. remove a server")
+      print("3. list existing servers")
+      print("4. exit")
       io.write()
       local choice = tonumber(io.read())
       if choice == 1 then
         term.clear()
-        addOption()
+        addoption()
       elseif choice == 2 then
         term.clear()
-        removeOption()
+        removeoption()
       elseif choice == 3 then
         term.clear()
-        listOptions()
+        listoptions()
       elseif choice == 4 then
         term.clear()
         break
       else
-        print("Invalid choice.")
+        print("invalid choice.")
       end
     end
   end
 
   local options = dofile("servers.lua")
   
-  local choice = cmdArgs.server
+  local choice = cmdargs.server
   
   if not choice then
     for i, option in ipairs(options) do
@@ -333,27 +339,15 @@ if checkPassword(loginpwd) == true then
 
   local url = options[choice].value
 
-  term.clear()
+  if not noninteractive then
+    term.clear()
+  end
 
-  local contents = {
-  embeds = {  
-    {
-      title = "Login",
-      description = loginusr .. " just logged in!",
-      color = 5763719
-    }
-  },
-  username = "CMP",
-  avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
-  }
-
-  internet.request(url, json.encode(contents), headers, "POST")
-
-  if cmdArgs.message then
+  if cmdargs.message then
     local shortcuts = dofile("shortcuts.lua")
     local dissected = {}
 
-    for segment in cmdArgs.message:gmatch("%S+") do
+    for segment in cmdargs.message:gmatch("%S+") do
       table.insert(dissected, segment)
     end
     
@@ -369,11 +363,11 @@ if checkPassword(loginpwd) == true then
 
     local contents = {
       content = message,
-      username = "CMP" .. " - " .. loginusr,
+      username = "cmp" .. " - " .. loginusr,
       avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
     }
 
-    local request = internet.request(url, json.encode(contents), headers, "POST")
+    local request = internet.request(url, json.encode(contents), headers, "post")
     local response = ""
     for chunk in request do
       response = response .. chunk
@@ -381,36 +375,32 @@ if checkPassword(loginpwd) == true then
     
     os.sleep(1)
     
-    local logout_contents = {
-      embeds = {  
-        {
-          title = "Logout",
-          description = loginusr .. " logged out.",
-          color = 15548997
-        }
-      },
-      username = "CMP",
-      avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
-    }
-
-    local logout_request = internet.request(url, json.encode(logout_contents), headers, "POST")
-    local logout_response = ""
-    for chunk in logout_request do
-      logout_response = logout_response .. chunk
-    end
-    
     term.clear()
-    print("Message sent. Exiting.")
-    os.execute("sleep 1")
+    print("message sent. exiting.")
+    os.sleep(1)
     term.clear()
     return
   end
+
+  local contents = {
+  embeds = {  
+    {
+      title = "login",
+      description = loginusr .. " just logged in!",
+      color = 5763719
+    }
+  },
+  username = "cmp",
+  avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
+  }
+
+  internet.request(url, json.encode(contents), headers, "post")
 
   io.write()
 
   while true do
 
-    ::MessageStart::
+    ::messagestart::
 
     local message = io.read()
 
@@ -418,16 +408,16 @@ if checkPassword(loginpwd) == true then
         break
       
       elseif message == "/settings" then
-        print("Select a setting to modify")
-        print("1. Servers")
-        print("2. Shortcuts")
+        print("select a setting to modify")
+        print("1. servers")
+        print("2. shortcuts")
         local setting_choice = io.read()
         
         if setting_choice == "1" then
           local term = require "term"
           local options = dofile("servers.lua")
           
-          local function saveOptions()
+          local function saveoptions()
             local file = io.open("servers.lua", "w")
             file:write("return {\n")
             for i, option in ipairs(options) do
@@ -437,20 +427,20 @@ if checkPassword(loginpwd) == true then
             file:close()
           end
           
-          local function addOption()
-            print("Enter a name for the new server:")
+          local function addoption()
+            print("enter a name for the new server:")
             io.write()
             local name = io.read()
-            print("Enter a webhook link for the new server:")
+            print("enter a webhook link for the new server:")
             io.write()
             local value = io.read()
             table.insert(options, {name = name, value = value})
-            saveOptions()
-            print("Option added.")
+            saveoptions()
+            print("option added.")
           end
           
-          local function removeOption()
-            print("Enter the number of the server you want to remove:")
+          local function removeoption()
+            print("enter the number of the server you want to remove:")
             for i, option in ipairs(options) do
               print(i .. ". " .. option.name)
             end
@@ -458,15 +448,15 @@ if checkPassword(loginpwd) == true then
             local choice = tonumber(io.read())
             if choice and options[choice] then
               table.remove(options, choice)
-              saveOptions()
-              print("Server removed.")    
+              saveoptions()
+              print("server removed.")    
             else
-              print("Invalid choice.")
+              print("invalid choice.")
             end
           end
           
-          local function listOptions()
-            print("Existing options:")
+          local function listoptions()
+            print("existing options:")
             for i, option in ipairs(options) do
               print(i .. ". " .. option.name)
             end
@@ -474,36 +464,36 @@ if checkPassword(loginpwd) == true then
           
           while true do
             print("\n")
-            print("Select a subcommand:")
-            print("1. Add a server")
-            print("2. Remove a server")
-            print("3. List existing servers")
-            print("4. Exit")
+            print("select a subcommand:")
+            print("1. add a server")
+            print("2. remove a server")
+            print("3. list existing servers")
+            print("4. exit")
             io.write()
             local choice = tonumber(io.read())
             if choice == 1 then
               term.clear()
-              addOption()
+              addoption()
             elseif choice == 2 then
               term.clear()
-              removeOption()
+              removeoption()
             elseif choice == 3 then
               term.clear()
-              listOptions()
+              listoptions()
             elseif choice == 4 then
               term.clear()
               break
             else
-              print("Invalid choice.")
+              print("invalid choice.")
             end
           end
-          goto MessageStart
+          goto messagestart
 
         elseif setting_choice == "2" then
           local term = require "term"
           local options = dofile("shortcuts.lua")
           
-          local function saveOptions()
+          local function saveoptions()
             local file = io.open("shortcuts.lua", "w")
             file:write("return {\n")
             for i, option in ipairs(options) do
@@ -513,20 +503,20 @@ if checkPassword(loginpwd) == true then
             file:close()
           end
           
-          local function addOption()
-            print("Enter the name of the shortcut:")
+          local function addoption()
+            print("enter the name of the shortcut:")
             io.write()
             local name = io.read()
-            print("Enter what you want it to be replaced with:")
+            print("enter what you want it to be replaced with:")
             io.write()
             local value = io.read()
             table.insert(options, {name = name, value = value})
-            saveOptions()
-            print("Shortcut added.")
+            saveoptions()
+            print("shortcut added.")
           end
           
-          local function removeOption()
-            print("Enter the number of the shortcut you want to remove:")
+          local function removeoption()
+            print("enter the number of the shortcut you want to remove:")
             for i, option in ipairs(options) do
               print(i .. ". " .. option.name .. " => " .. option.value)
             end
@@ -534,15 +524,15 @@ if checkPassword(loginpwd) == true then
             local choice = tonumber(io.read())
             if choice and options[choice] then
               table.remove(options, choice)
-              saveOptions()
-              print("Shortcut removed.")
+              saveoptions()
+              print("shortcut removed.")
             else
-              print("Invalid choice.")
+              print("invalid choice.")
             end
           end
           
-          local function listOptions()
-            print("Existing shortcuts:")
+          local function listoptions()
+            print("existing shortcuts:")
             for i, option in ipairs(options) do
               print(i .. ". " .. option.name)
             end
@@ -550,30 +540,30 @@ if checkPassword(loginpwd) == true then
           
           while true do
             print("\n")
-            print("Select a subcommand:")
-            print("1. Add a shortcut")
-            print("2. Remove a shortcut")
-            print("3. List existing shortcuts")
-            print("4. Exit")
+            print("select a subcommand:")
+            print("1. add a shortcut")
+            print("2. remove a shortcut")
+            print("3. list existing shortcuts")
+            print("4. exit")
             io.write()
             local choice = tonumber(io.read())
             if choice == 1 then
               term.clear()
-              addOption()
+              addoption()
             elseif choice == 2 then
               term.clear()
-              removeOption()
+              removeoption()
             elseif choice == 3 then
               term.clear()
-              listOptions()
+              listoptions()
             elseif choice == 4 then
               term.clear()
               break
             else
-              print("Invalid choice.")
+              print("invalid choice.")
             end
           end
-          goto MessageStart
+          goto messagestart
         end
         io.write()
       end
@@ -598,11 +588,11 @@ if checkPassword(loginpwd) == true then
     local contents = {
       
       content = message,
-      username = "CMP" .. " - " .. loginusr,
+      username = "cmp" .. " - " .. loginusr,
       avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
   }
 
-    internet.request(url, json.encode(contents), headers, "POST")
+    internet.request(url, json.encode(contents), headers, "post")
 
     io.write()
   end
@@ -610,27 +600,30 @@ if checkPassword(loginpwd) == true then
   local contents = {
   embeds = {  
     {
-      title = "Logout",
+      title = "logout",
       description = loginusr .. " logged out.",
       color = 15548997
     }
   },
-  username = "CMP",
+  username = "cmp",
   avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
   }
 
-  internet.request(url, json.encode(contents), headers, "POST")
+  internet.request(url, json.encode(contents), headers, "post")
 
-  term.clear()
-  print("Logging out")
-  os.execute("sleep 1")
-  term.clear()
+  if not noninteractive then
+    term.clear()
+    print("logging out")
+    os.execute("sleep 1")
+    term.clear()
+  end
 else
-  term.clear()
-  print("Exiting")
-  os.execute("sleep 1")
-  term.clear()
+  if not noninteractive then
+    term.clear()
+    print("exiting")
+    os.execute("sleep 1")
+    term.clear()
+  end
 end
 
-
---Main code
+--main code
