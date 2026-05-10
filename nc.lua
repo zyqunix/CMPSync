@@ -1,3 +1,4 @@
+local component = require("component")
 local filesystem = require("filesystem")
 
 function sendToDiscord(serverIndex, message)
