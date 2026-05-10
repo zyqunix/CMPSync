@@ -9,6 +9,33 @@ local component = require("component")
 local term = require("term")
 local filesystem = require("filesystem") 
 
+local args = {...}
+local cmdArgs = {
+  user = nil,
+  password = nil,
+  server = nil,
+  message = nil
+}
+
+local i = 1
+while i <= #args do
+  if args[i] == "-u" or args[i] == "--user" then
+    cmdArgs.user = args[i + 1]
+    i = i + 2
+  elseif args[i] == "-p" or args[i] == "--password" then
+    cmdArgs.password = args[i + 1]
+    i = i + 2
+  elseif args[i] == "-server" or args[i] == "-s" then
+    cmdArgs.server = tonumber(args[i + 1])
+    i = i + 2
+  elseif args[i] == "-m" or args[i] == "--message" then
+    cmdArgs.message = args[i + 1]
+    i = i + 2
+  else
+    i = i + 1
+  end
+end
+
 local serversfile = ("/home/servers.lua")
 if not filesystem.exists(serversfile) then
   local serversfile = io.open(serversfile, "w")
@@ -24,8 +51,6 @@ if not filesystem.exists(shortcutsfile) then
 end
 
 --Dependencies
-
-
 
 --Main code
 
@@ -53,11 +78,9 @@ end
 local function encode_table(val, stack)
   local res = {}
   stack = stack or {}
-  -- Circular reference?
   if stack[val] then error("circular reference") end
   stack[val] = true
   if rawget(val, 1) ~= nil or next(val) == nil then
-    -- Treat as array -- check keys are valid and it is not sparse
     local n = 0
     for k in pairs(val) do
       if type(k) ~= "number" then
@@ -68,14 +91,12 @@ local function encode_table(val, stack)
     if n ~= #val then
       error("invalid table: sparse array")
     end
-    -- Encode
     for i, v in ipairs(val) do
       table.insert(res, encode(v, stack))
     end
     stack[val] = nil
     return "[" .. table.concat(res, ",") .. "]"
   else
-    -- Treat as an object
     for k, v in pairs(val) do
       if type(k) ~= "string" then
         error("invalid table: mixed or invalid key types")
@@ -90,7 +111,6 @@ local function encode_string(val)
   return '"' .. val:gsub('[%z\1-\31\\"]', escape_char) .. '"'
 end
 local function encode_number(val)
-  -- Check for NaN, -inf and inf
   if val ~= val or (val <= -math.huge) or (val >= math.huge) then
     error("unexpected number value '" .. tostring(val) .. "'")
   end
@@ -147,11 +167,15 @@ end
 
 term.clear()
 
-io.write("Username:\n")
+local loginusr = cmdArgs.user
+local loginpwd = cmdArgs.password
 
-local loginusr = io.read()
+if not loginusr then
+  io.write("Username:\n")
+  loginusr = io.read()
+end
 
-local function checkPassword()  
+local function checkPassword(attempt)  
   if component.isAvailable("data") then  
     local file = io.open("password.lua")
       for line in file:lines() do
@@ -176,33 +200,43 @@ local function checkPassword()
 end
 
 if filesystem.exists("/home/password.lua") then 
-  io.write("Password:\n")
-  attempt = io.read()
+  if not loginpwd then
+    io.write("Password:\n")
+    loginpwd = io.read()
+  end
 else
   if component.isAvailable("data") then
-    io.write("Enter the password you want to be set:\n")
-    local password = io.read()
+    if not loginpwd then
+      io.write("Enter the password you want to be set:\n")
+      loginpwd = io.read()
+    end
     local file = io.open("password.lua","a")
     local salt = component.data.random(16)
-    local hashed = component.data.encode64(component.data.sha256(password..salt))
+    local hashed = component.data.encode64(component.data.sha256(loginpwd..salt))
     file:write(string.format("%s;%s\n",hashed,component.data.encode64(salt)))
     file:close()
-    term.clear()
-    io.write("Password:\n")
-    attempt = io.read()
+    if not cmdArgs.password then
+      term.clear()
+      io.write("Password:\n")
+      loginpwd = io.read()
+    end
   else
-    io.write("Enter the password you want to be set:\n")
-    local password = io.read()
+    if not loginpwd then
+      io.write("Enter the password you want to be set:\n")
+      loginpwd = io.read()
+    end
     local file = io.open("password.lua","a")
-    file:write(password)
+    file:write(loginpwd)
     file:close()
-    term.clear()
-    io.write("Password:\n")
-    attempt = io.read()
+    if not cmdArgs.password then
+      term.clear()
+      io.write("Password:\n")
+      loginpwd = io.read()
+    end
   end
 end 
 
-if checkPassword(attempt) == true then
+if checkPassword(loginpwd) == true then
   term.clear()
 
   -- Main code
@@ -213,7 +247,6 @@ if checkPassword(attempt) == true then
     local term = require "term"
     local options = dofile("servers.lua")
     
-    -- function to save options to file
     local function saveOptions()
       local file = io.open("servers.lua", "w")
       file:write("return {\n")
@@ -224,7 +257,6 @@ if checkPassword(attempt) == true then
       file:close()
     end
     
-    -- function to add a new option
     local function addOption()
       print("Enter a name for the new server:")
       io.write()
@@ -237,7 +269,6 @@ if checkPassword(attempt) == true then
       print("Option added.")
     end
     
-    -- function to remove an existing option
     local function removeOption()
       print("Enter the number of the server you want to remove:")
       for i, option in ipairs(options) do
@@ -254,7 +285,6 @@ if checkPassword(attempt) == true then
       end
     end
     
-    -- function to list existing options
     local function listOptions()
       print("Existing options:")
       for i, option in ipairs(options) do
@@ -262,7 +292,6 @@ if checkPassword(attempt) == true then
       end
     end
     
-    -- main loop
     while true do
       print("\n")
       print("The server list is empty, add a new server")
@@ -291,13 +320,16 @@ if checkPassword(attempt) == true then
   end
 
   local options = dofile("servers.lua")
-  for i, option in ipairs(options) do
-    print(i .. ". " .. option.name)
-
+  
+  local choice = cmdArgs.server
+  
+  if not choice then
+    for i, option in ipairs(options) do
+      print(i .. ". " .. option.name)
+    end
+    io.write()
+    choice = tonumber(io.read())
   end
-
-  io.write()
-  local choice = tonumber(io.read())
 
   local url = options[choice].value
 
@@ -317,6 +349,51 @@ if checkPassword(attempt) == true then
 
   internet.request(url, json.encode(contents), headers, "POST")
 
+  if cmdArgs.message then
+    local shortcuts = dofile("shortcuts.lua")
+    local dissected = {}
+
+    for segment in cmdArgs.message:gmatch("%S+") do
+      table.insert(dissected, segment)
+    end
+    
+    for i, segment in ipairs(dissected) do
+      for j, shortcut in ipairs(shortcuts) do
+        if segment == shortcut.name then
+          dissected[i] = shortcut.value
+          break
+        end
+      end
+    end    
+    local message = table.concat(dissected, " ")      
+
+    local contents = {
+      content = message,
+      username = "CMP" .. " - " .. loginusr,
+      avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
+    }
+
+    internet.request(url, json.encode(contents), headers, "POST")
+    
+    local logout_contents = {
+      embeds = {  
+        {
+          title = "Logout",
+          description = loginusr .. " logged out.",
+          color = 15548997
+        }
+      },
+      username = "CMP",
+      avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
+    }
+    internet.request(url, json.encode(logout_contents), headers, "POST")
+    term.clear()
+    print("Message sent. Exiting.")
+    os.execute("sleep 1")
+    term.clear()
+    return
+  end
+
   io.write()
 
   while true do
@@ -334,13 +411,10 @@ if checkPassword(attempt) == true then
         print("2. Shortcuts")
         local setting_choice = io.read()
         
-        --Servers
-
         if setting_choice == "1" then
           local term = require "term"
           local options = dofile("servers.lua")
           
-          -- function to save options to file
           local function saveOptions()
             local file = io.open("servers.lua", "w")
             file:write("return {\n")
@@ -351,7 +425,6 @@ if checkPassword(attempt) == true then
             file:close()
           end
           
-          -- function to add a new option
           local function addOption()
             print("Enter a name for the new server:")
             io.write()
@@ -364,7 +437,6 @@ if checkPassword(attempt) == true then
             print("Option added.")
           end
           
-          -- function to remove an existing option
           local function removeOption()
             print("Enter the number of the server you want to remove:")
             for i, option in ipairs(options) do
@@ -381,7 +453,6 @@ if checkPassword(attempt) == true then
             end
           end
           
-          -- function to list existing options
           local function listOptions()
             print("Existing options:")
             for i, option in ipairs(options) do
@@ -389,7 +460,6 @@ if checkPassword(attempt) == true then
             end
           end
           
-          -- main loop
           while true do
             print("\n")
             print("Select a subcommand:")
@@ -417,13 +487,10 @@ if checkPassword(attempt) == true then
           end
           goto MessageStart
 
-        --Shortcuts
-
         elseif setting_choice == "2" then
           local term = require "term"
           local options = dofile("shortcuts.lua")
           
-          -- function to save options to file
           local function saveOptions()
             local file = io.open("shortcuts.lua", "w")
             file:write("return {\n")
@@ -434,7 +501,6 @@ if checkPassword(attempt) == true then
             file:close()
           end
           
-          -- function to add a new option
           local function addOption()
             print("Enter the name of the shortcut:")
             io.write()
@@ -447,7 +513,6 @@ if checkPassword(attempt) == true then
             print("Shortcut added.")
           end
           
-          -- function to remove an existing option
           local function removeOption()
             print("Enter the number of the shortcut you want to remove:")
             for i, option in ipairs(options) do
@@ -464,7 +529,6 @@ if checkPassword(attempt) == true then
             end
           end
           
-          -- function to list existing options
           local function listOptions()
             print("Existing shortcuts:")
             for i, option in ipairs(options) do
@@ -472,7 +536,6 @@ if checkPassword(attempt) == true then
             end
           end
           
-          -- main loop
           while true do
             print("\n")
             print("Select a subcommand:")
