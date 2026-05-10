@@ -1,15 +1,8 @@
-local args = {...}
-local serverIndex = tonumber(args[1])
-local messageText = args[2]
-
-if not serverIndex or not messageText then
-  print("-> discord.lua <server_index> <message>")
-  return
-end
-
+-- send_discord.lua
 local internet = require("internet")
 local component = require("component")
 local filesystem = require("filesystem")
+local event = require("event")
 
 local headers = {
   ["content-type"] = "application/json",
@@ -19,15 +12,15 @@ local headers = {
 local json = { _version = "0.1.2" }
 local encode
 local escape_char_map = {
-  [ "\\" ] = "\\",
-  [ "\"" ] = "\"",
-  [ "\b" ] = "b",
-  [ "\f" ] = "f",
-  [ "\n" ] = "n",
-  [ "\r" ] = "r",
-  [ "\t" ] = "t",
+  ["\\"] = "\\",
+  ["\"""] = "\"",
+  ["\b"] = "b",
+  ["\f"] = "f",
+  ["\n"] = "n",
+  ["\r"] = "r",
+  ["\t"] = "t",
 }
-local escape_char_map_inv = { [ "/" ] = "/" }
+local escape_char_map_inv = { ["/"] = "/" }
 for k, v in pairs(escape_char_map) do
   escape_char_map_inv[v] = k
 end
@@ -79,11 +72,11 @@ local function encode_number(val)
   return string.format("%.14g", val)
 end
 local type_func_map = {
-  [ "nil"     ] = encode_nil,
-  [ "table"   ] = encode_table,
-  [ "string"  ] = encode_string,
-  [ "number"  ] = encode_number,
-  [ "boolean" ] = tostring,
+  ["nil"] = encode_nil,
+  ["table"] = encode_table,
+  ["string"] = encode_string,
+  ["number"] = encode_number,
+  ["boolean"] = tostring,
 }
 encode = function(val, stack)
   local t = type(val)
@@ -94,45 +87,59 @@ encode = function(val, stack)
   error("unexpected type '" .. t .. "'")
 end
 function json.encode(val)
-  return ( encode(val) )
+  return (encode(val))
 end
 
-local servers = dofile("/home/servers.lua")
-if not servers[serverIndex] then
-  print("Invalid server index")
-  return
-end
+local pipeFile = "/tmp/discord_pipe"
 
-local url = servers[serverIndex].value
-
-local shortcuts = dofile("/home/shortcuts.lua")
-local dissected = {}
-
-for segment in messageText:gmatch("%S+") do
-  table.insert(dissected, segment)
-end
-
-for i, segment in ipairs(dissected) do
-  for j, shortcut in ipairs(shortcuts) do
-    if segment == shortcut.name then
-      dissected[i] = shortcut.value
-      break
+while true do
+  if filesystem.exists(pipeFile) then
+    local file = io.open(pipeFile, "r")
+    if file then
+      local data = file:read("*all")
+      file:close()
+      
+      if data and #data > 0 then
+        local serverIndex, messageText = data:match("([^\n]+)\n(.+)")
+        
+        if serverIndex and messageText then
+          serverIndex = tonumber(serverIndex)
+          
+          local servers = dofile("/home/servers.lua")
+          if servers[serverIndex] then
+            local url = servers[serverIndex].value
+            
+            local shortcuts = dofile("/home/shortcuts.lua")
+            local dissected = {}
+            
+            for segment in messageText:gmatch("%S+") do
+              table.insert(dissected, segment)
+            end
+            
+            for i, segment in ipairs(dissected) do
+              for j, shortcut in ipairs(shortcuts) do
+                if segment == shortcut.name then
+                  dissected[i] = shortcut.value
+                  break
+                end
+              end
+            end
+            
+            local finalMessage = table.concat(dissected, " ")
+            
+            local contents = {
+              content = finalMessage,
+              username = "api_sender",
+              avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
+            }
+            
+            internet.request(url, json.encode(contents), headers, "post")
+          end
+        end
+        
+        os.remove(pipeFile)
+      end
     end
   end
+  os.sleep(0.5)
 end
-
-local finalMessage = table.concat(dissected, " ")
-
-local contents = {
-  content = finalMessage,
-  username = "api_sender",
-  avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
-}
-
-local request = internet.request(url, json.encode(contents), headers, "post")
-local response = ""
-for chunk in request do
-  response = response .. chunk
-end
-
-print("Message sent")
