@@ -93,31 +93,26 @@ while true do
   if filesystem.exists(pipeFile) then
     local file = io.open(pipeFile, "r")
     if file then
-      local data = file:read("*all")
+      local serverIndex = file:read("*line")
+      local messageText = file:read("*all")
       file:close()
       
-      if data and #data > 0 then
-        local serverIndex, messageText = data:match("([^\n]+)\n(.+)")
+      if serverIndex and #messageText > 0 then
+        serverIndex = tonumber(serverIndex)
         
-        if serverIndex and messageText then
-          serverIndex = tonumber(serverIndex)
+        local servers = dofile("/home/servers.lua")
+        if servers[serverIndex] then
+          local url = servers[serverIndex].value
           
-          local servers = dofile("/home/servers.lua")
-          if servers[serverIndex] then
-            local url = servers[serverIndex].value
-            
-            local contents = {
-              content = messageText,
-              username = "FUSION",
-            }
-            
-            local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
-            while requestHandle.read() do end
-            requestHandle.close()
-          end
+          local contents = {
+            content = messageText,
+            username = "FUSION",
+          }
+          
+          local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
+          while requestHandle.read() do end
+          requestHandle.close()
         end
-        
-        os.remove(pipeFile)
       end
     end
   end
