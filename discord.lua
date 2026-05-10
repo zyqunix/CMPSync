@@ -25,7 +25,7 @@ while i <= #args do
   elseif args[i] == "-p" or args[i] == "--password" then
     cmdArgs.password = args[i + 1]
     i = i + 2
-  elseif args[i] == "-server" or args[i] == "-s" then
+  elseif args[i] == "-s" or args[i] == "--server" then
     cmdArgs.server = tonumber(args[i + 1])
     i = i + 2
   elseif args[i] == "-m" or args[i] == "--message" then
@@ -375,6 +375,8 @@ if checkPassword(loginpwd) == true then
 
     internet.request(url, json.encode(contents), headers, "POST")
     
+    os.sleep(1)
+
     local logout_contents = {
       embeds = {  
         {
@@ -387,6 +389,7 @@ if checkPassword(loginpwd) == true then
       avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
     }
     internet.request(url, json.encode(logout_contents), headers, "POST")
+    os.sleep(1)
     term.clear()
     print("Message sent. Exiting.")
     os.execute("sleep 1")
