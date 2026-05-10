@@ -9,8 +9,9 @@ local component = require("component")
 local term = require("term")
 local filesystem = require("filesystem")
 local event = require("event")
+local shell = require("shell")
 
-local args = {...}
+local args = shell.parse(...)
 local cmdargs = {
   user = nil,
   password = nil,
