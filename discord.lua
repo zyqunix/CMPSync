@@ -118,10 +118,11 @@ while true do
             local chunk = requestHandle.read()
             if not chunk then break end
             response = response .. chunk
+            print(response)
           end
         end
       end
     end
   end
-  os.sleep(301)
+  os.sleep(300)
 end
