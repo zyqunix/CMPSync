@@ -89,34 +89,32 @@ end
 
 local pipeFile = "/tmp/discord_pipe"
 
-while true do
-  if filesystem.exists(pipeFile) then
-    local file = io.open(pipeFile, "r")
-    if file then
-      local serverIndex = file:read("*line")
-      local messageText = file:read("*all")
-      print(serverIndex)
-      print(messageText)
-      file:close()
+if filesystem.exists(pipeFile) then
+  local file = io.open(pipeFile, "r")
+  if file then
+    local serverIndex = file:read("*line")
+    local messageText = file:read("*all")
+    print(serverIndex)
+    print(messageText)
+    file:close()
+    
+    if serverIndex and #messageText > 0 then
+      serverIndex = tonumber(serverIndex)
       
-      if serverIndex and #messageText > 0 then
-        serverIndex = tonumber(serverIndex)
+      local servers = dofile("/home/servers.lua")
+      if servers[serverIndex] then
+        local url = servers[serverIndex].value
+        print("sending to "..url)
         
-        local servers = dofile("/home/servers.lua")
-        if servers[serverIndex] then
-          local url = servers[serverIndex].value
-          print("sending to "..url)
-          
-          local contents = {
-            content = messageText,
-            username = "FUSION",
-          }
-          
-          local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
-          requestHandle.read()
-        end
+        local contents = {
+          content = messageText,
+          username = "FUSION",
+        }
+        
+        local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
+        requestHandle.read()
       end
     end
   end
-  os.sleep(0.5)
 end
+os.sleep(0.5)
