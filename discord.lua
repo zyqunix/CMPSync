@@ -106,31 +106,12 @@ while true do
           if servers[serverIndex] then
             local url = servers[serverIndex].value
             
-            local shortcuts = dofile("/home/shortcuts.lua")
-            local dissected = {}
-            
-            for segment in messageText:gmatch("%S+") do
-              table.insert(dissected, segment)
-            end
-            
-            for i, segment in ipairs(dissected) do
-              for j, shortcut in ipairs(shortcuts) do
-                if segment == shortcut.name then
-                  dissected[i] = shortcut.value
-                  break
-                end
-              end
-            end
-            
-            local finalMessage = table.concat(dissected, " ")
-            
             local contents = {
-              content = finalMessage,
+              content = messageText,
               username = "FUSION",
-              avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
             }
             
-            local requestHandle = internet.request(url, json.encode(contents), headers, "post")
+            local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
             while requestHandle.read() do end
             requestHandle.close()
           end
