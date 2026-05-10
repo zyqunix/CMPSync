@@ -24,7 +24,7 @@ local cooling_Rate = r.getCoolingRate()
 local processing
 if r.isProcessing() then
     processing = "REACTOR ACTIVE"
-else:
+else
     processing = "REACTOR INACTIVE"
 end
 
