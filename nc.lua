@@ -32,10 +32,10 @@ end
 
 local message = string.format(
 [[
-\*\* SIZE %f FUSION REACTOR \*\*
+\*\* SIZE %.0f FUSION REACTOR \*\*
 **%s**
 -> %s-%s
--> %f RF/%f RF || %f RF/t
+-> %.2f RF/%.2f RF || %.2f RF/t
 -> %.2f%% Efficiency at %.2f Kelvin (%.2f Cooling Rate)
 ]], toroid_size, processing, first_fuel, second_fuel, energy_stored, max_energy, energy_gen, efficiency, temperature, cooling_Rate)
 
