@@ -22,7 +22,7 @@ local temperature = r.getTemperature()
 local cooling_Rate = r.getCoolingRate()
 
 local processing
-if r.isProcessing() do
+if r.isProcessing() then
     processing = "REACTOR ACTIVE"
 else:
     processing = "REACTOR INACTIVE"
