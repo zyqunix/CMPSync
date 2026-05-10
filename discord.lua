@@ -373,10 +373,14 @@ if checkPassword(loginpwd) == true then
       avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
     }
 
-    internet.request(url, json.encode(contents), headers, "POST")
+    local request = internet.request(url, json.encode(contents), headers, "POST")
+    local response = ""
+    for chunk in request do
+      response = response .. chunk
+    end
     
     os.sleep(1)
-
+    
     local logout_contents = {
       embeds = {  
         {
@@ -388,8 +392,13 @@ if checkPassword(loginpwd) == true then
       username = "CMP",
       avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
     }
-    internet.request(url, json.encode(logout_contents), headers, "POST")
-    os.sleep(1)
+
+    local logout_request = internet.request(url, json.encode(logout_contents), headers, "POST")
+    local logout_response = ""
+    for chunk in logout_request do
+      logout_response = logout_response .. chunk
+    end
+    
     term.clear()
     print("Message sent. Exiting.")
     os.execute("sleep 1")
