@@ -1,8 +1,5 @@
--- send_discord.lua
 local internet = require("internet")
-local component = require("component")
 local filesystem = require("filesystem")
-local event = require("event")
 
 local headers = {
   ["content-type"] = "application/json",
@@ -13,7 +10,7 @@ local json = { _version = "0.1.2" }
 local encode
 local escape_char_map = {
   ["\\"] = "\\",
-  ["\"""] = "\"",
+  ["\""] = "\"",
   ["\b"] = "b",
   ["\f"] = "f",
   ["\n"] = "n",
@@ -129,11 +126,13 @@ while true do
             
             local contents = {
               content = finalMessage,
-              username = "api_sender",
+              username = "FUSION",
               avatar_url = "https://cdn.discordapp.com/attachments/1082257996429668395/1082722647030378607/image.png?size=4096"
             }
             
-            internet.request(url, json.encode(contents), headers, "post")
+            local requestHandle = internet.request(url, json.encode(contents), headers, "post")
+            while requestHandle.read() do end
+            requestHandle.close()
           end
         end
         

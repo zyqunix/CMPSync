@@ -2,10 +2,18 @@ local filesystem = require("filesystem")
 
 function sendToDiscord(serverIndex, message)
   local pipeFile = "/tmp/discord_pipe"
+  
+  if not filesystem.exists(pipeFile) then
+    filesystem.makePipe(pipeFile)
+  end
+  
   local file = io.open(pipeFile, "w")
   if file then
     file:write(serverIndex .. "\n" .. message)
+    file:flush()
     file:close()
+  else
+    print("failed to open pipe: " .. pipeFile)
   end
 end
 
@@ -19,7 +27,7 @@ local max_energy = r.getMaxEnergyStored()
 local energy_gen = r.getReactorProcessPower()
 local efficiency = r.getEfficiency()
 local temperature = r.getTemperature()
-local cooling_Rate = r.getCoolingRate()
+local cooling_Rate = r.getReactorCoolingRate()
 
 local processing
 if r.isProcessing() then
@@ -35,11 +43,6 @@ local message = string.format(
 -> %s-%s
 -> %d RF/%d RF || %d RF/t
 -> %.2f%% Efficiency at %.2f Kelvin (%.2f Cooling Rate)
-]],
-toroid_size,
-processing,
-first_fuel, second_fuel,
-energy_stored, max_energy, energy_gen,
-efficiency, temperature, cooling_Rate)
+]], toroid_size, processing, first_fuel, second_fuel, energy_stored, max_energy, energy_gen, efficiency, temperature, cooling_Rate)
 
 sendToDiscord(1, message)
