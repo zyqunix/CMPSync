@@ -113,12 +113,7 @@ while true do
           }
           
           local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
-          local response = ""
-          while true do
-            local chunk = requestHandle.read()
-            if not chunk then break end
-            response = response .. chunk
-          end
+          requestHandle.read()
         end
       end
     end
