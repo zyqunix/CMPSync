@@ -105,7 +105,11 @@ while true do
           local url = servers[serverIndex].value
           
           local contents = {
-            content = messageText,
+            embeds = {
+                title = "FUSION REACTOR",
+                description = messageText,
+                color = BE7610
+            },
             username = "FUSION",
           }
           
