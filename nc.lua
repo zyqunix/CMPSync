@@ -32,7 +32,7 @@ end
 
 local message = string.format(
 [[
-# \*\* SIZE %.0f FUSION REACTOR \*\*
+\*\* SIZE %.0f FUSION REACTOR \*\*
 **%s**
 -> %s-%s
 -> %.2f RF/%.2f RF || %.2f RF/t
