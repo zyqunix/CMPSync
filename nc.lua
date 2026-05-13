@@ -1,5 +1,6 @@
 local component = require("component")
 local filesystem = require("filesystem")
+local term = require("term")
 
 function sendToDiscord(serverIndex, message)
   local pipeFile = "/tmp/discord_pipe"
