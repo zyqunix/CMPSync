@@ -106,9 +106,11 @@ while true do
           
           local contents = {
             embeds = {
+              {
                 title = "FUSION REACTOR",
                 description = messageText,
                 color = 12482064
+              }
             },
             username = "FUSION"
           }
