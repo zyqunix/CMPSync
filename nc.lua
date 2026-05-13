@@ -39,6 +39,7 @@ local message = string.format(
 -> %.2f%% Efficiency at %.2f Megakelvin (%.2f Cooling Rate)
 ]], toroid_size, processing, first_fuel, second_fuel, energy_stored, max_energy, energy_gen, efficiency, temperature / 1000000, cooling_Rate)
 
+term.clear()
 print(message)
 
 sendToDiscord(1, message)

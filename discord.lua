@@ -108,9 +108,9 @@ while true do
             embeds = {
                 title = "FUSION REACTOR",
                 description = messageText,
-                color = BE7610
+                color = 12482064
             },
-            username = "FUSION",
+            username = "FUSION"
           }
           
           local requestHandle = internet.request(url, json.encode(contents), headers, "POST")
