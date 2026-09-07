@@ -100,7 +100,7 @@ while true do
       if serverIndex and #messageText > 0 then
         serverIndex = tonumber(serverIndex)
         
-        local servers = dofile("/home/servers.lua")
+        local servers = dofile("./servers.lua")
         if servers[serverIndex] then
           local url = servers[serverIndex].value
           
