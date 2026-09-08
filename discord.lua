@@ -107,12 +107,12 @@ while true do
           local contents = {
             embeds = {
               {
-                title = "FUSION REACTOR",
+                title = "NUCLEARCRAFT REACTORS",
                 description = messageText,
                 color = 12482064
               }
             },
-            username = "FUSION"
+            username = "NC"
           }
           
           local requestHandle = internet.request(url, json.encode(contents), headers, "POST")

@@ -1,7 +1,8 @@
 local component = require("component")
 local filesystem = require("filesystem")
-local term = require("term")
+--local term = require("term")
 
+--[[
 function sendToDiscord(serverIndex, message)
   local pipeFile = "/tmp/discord_pipe"
   local file = io.open(pipeFile, "w")
@@ -11,6 +12,7 @@ function sendToDiscord(serverIndex, message)
     file:close()
   end
 end
+]]
 
 r = component.nc_fission_reactor
 
@@ -32,10 +34,18 @@ local max_heat = r.getMaxHeatLevel()
 local efficiency = r.getEfficiency()
 local heat_mult = r.getHeatMultiplier()
 
+print(x, y, z, energy_stored, max_energy, energy_change, process_time, fuel_process_time, fuel_name, cells, heat_level, max_heat, efficiency, heat_mult)
+
+if fuel_process_time == nil then
+  fuel_process_time = 0
+end
+
+local message
+
 local processing
 if r.isProcessing() then
     processing = "REACTOR ACTIVE"
-    local message = string.format(
+    message = string.format(
     [[
     # %dx%dx%d FISSION REACTOR (%d Cells)
     ## %s
@@ -50,7 +60,7 @@ if r.isProcessing() then
     )
 else
     processing = "REACTOR INACTIVE"
-    local message = string.format(
+    message = string.format(
     [[
     # %dx%dx%d FISSION REACTOR (%d Cells)
     ## %s
@@ -58,7 +68,7 @@ else
 end
 
 
-term.clear()
+-- term.clear()
 print(message)
 
-sendToDiscord(1, message)
+-- sendToDiscord(1, message)
