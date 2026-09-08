@@ -22,7 +22,7 @@ for _, file in ipairs(files) do
   local handle = io.open(file, "w")
   handle:write(content)
   handle:close()
-  print("downloaded" .. file)
+  print("downloaded " .. file)
 end
 
 print("all downloads successful")
